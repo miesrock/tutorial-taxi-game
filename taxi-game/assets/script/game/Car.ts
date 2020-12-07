@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, ParticleSystemComponent, BoxColliderComponent, RigidBodyComponent, ICollisionEvent } from "cc";
+import { _decorator, Component, Node, Vec3, ParticleSystem, ICollisionEvent, BoxCollider, RigidBody } from "cc";
 import { RoadPoint } from "./RoadPoint";
 import { CustomEventListener } from "../data/CustomEventListener";
 import { Constants } from "../data/Constants";
@@ -38,7 +38,7 @@ export class Car extends Component {
     private _acceleration = 0.2;
     private _isMain = false;
     private _isBraking = false;
-    private _gas: ParticleSystemComponent = null;
+    private _gas: ParticleSystem = null;
     private _overCD: Function = null;
     private _camera: Node = null;
     private _tootingCoolTime = 0;
@@ -128,7 +128,7 @@ export class Car extends Component {
 
     public setEntry(entry: Node, isMain = false){
         this.node.setWorldPosition(entry.worldPosition);
-        this._currRoadPoint = entry.getComponent(RoadPoint);
+        this._currRoadPoint = entry.getComponent(RoadPoint)!;
         this._isMain = isMain;
         if(!this._currRoadPoint){
             console.warn('There is no RoadPoint in ' + entry.name);
@@ -158,18 +158,18 @@ export class Car extends Component {
         this._runState = RunState.NORMAL;
         this._currSpeed = 0;
         this._isMoving = false;
-        const collider = this.node.getComponent(BoxColliderComponent);
+        const collider = this.node.getComponent(BoxCollider);
         if (this._isMain) {
             const gasNode = this.node.getChildByName('gas');
-            this._gas = gasNode.getComponent(ParticleSystemComponent);
+            this._gas = gasNode.getComponent(ParticleSystem);
             this._gas.play();
 
             collider.on('onCollisionEnter', this._onCollisionEnter, this);
-            collider.setGroup(Constants.CarGroup.MAIN_CAR);
-            collider.setMask(Constants.CarGroup.OTHER_CAR);
+            // collider.setGroup(Constants.CarGroup.MAIN_CAR);
+            // collider.setMask(Constants.CarGroup.OTHER_CAR);
         } else {
-            collider.setGroup(Constants.CarGroup.OTHER_CAR);
-            collider.setMask(-1);
+            // collider.setGroup(Constants.CarGroup.OTHER_CAR);
+            // collider.setMask(-1);
         }
 
         this._resetPhysical();
@@ -312,13 +312,13 @@ export class Car extends Component {
             return;
         }
 
-        const otherRigidBody = otherCollider.node.getComponent(RigidBodyComponent);
+        const otherRigidBody = otherCollider.node.getComponent(RigidBody);
         otherRigidBody.useGravity = true;
         otherRigidBody.applyForce(new Vec3(0, 3000, -1500), new Vec3(0, 0.5, 0));
 
         const collider = event.selfCollider;
         collider.addMask(Constants.CarGroup.NORMAL);
-        const rigidBody = this.node.getComponent(RigidBodyComponent);
+        const rigidBody = this.node.getComponent(RigidBody);
         rigidBody.useGravity = true;
         this._runState = RunState.CRASH;
         AudioManager.playSound(Constants.AudioSource.CRASH);
@@ -355,7 +355,7 @@ export class Car extends Component {
     }
 
     private _resetPhysical() {
-        const rigidBody = this.node.getComponent(RigidBodyComponent);
+        const rigidBody = this.node.getComponent(RigidBody);
         rigidBody.useGravity = false;
         rigidBody.sleep();
         rigidBody.wakeUp();
